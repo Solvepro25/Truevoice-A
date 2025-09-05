@@ -11,6 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine, Column, String, Float, Integer, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from typing import Optional
+from speechbrain.pretrained import EncoderClassifier
 import httpx
 import numpy as np
 
