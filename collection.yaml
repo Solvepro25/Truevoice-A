@@ -1,0 +1,72 @@
+openapi: 3.0.0
+info:
+  title: TrueVoice API
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+paths:
+  /token:
+    post:
+      summary: Generate JWT token
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: string
+      responses:
+        '200':
+          description: A JWT token
+  /enroll:
+    post:
+      summary: Enroll a user's voice
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: string
+                challenge_text:
+                  type: string
+                audio:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Enrollment successful
+  /verify:
+    post:
+      summary: Verify a user's voice
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: string
+                challenge_text:
+                  type: string
+                audio:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Verification result
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
