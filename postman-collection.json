@@ -1,0 +1,70 @@
+{
+  "info": {
+    "name": "TrueVoice API",
+    "_postman_id": "f9d6f1ac-4b6f-11ee-be56-0242ac120002",
+    "description": "Postman collection for TrueVoice Voice Verification API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/health"
+      }
+    },
+    {
+      "name": "Enroll Voice",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "accept", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "file", "type": "file", "src": "sample_audio.wav" }
+          ]
+        },
+        "url": "{{baseUrl}}/enroll/12345"
+      }
+    },
+    {
+      "name": "Verify Voice",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "accept", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "file", "type": "file", "src": "test_audio.wav" }
+          ]
+        },
+        "url": "{{baseUrl}}/verify/12345"
+      }
+    },
+    {
+      "name": "Liveness Check",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "accept", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "file", "type": "file", "src": "liveness_test.wav" },
+            { "key": "expected_phrase", "value": "My voice is my password", "type": "text" }
+          ]
+        },
+        "url": "{{baseUrl}}/liveness"
+      }
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8000" }
+  ]
+}
