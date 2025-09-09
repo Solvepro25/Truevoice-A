@@ -1,11 +1,11 @@
-# TrueVoice – Voice Verification API
+# Truevoice – Voice Verification API
 
 TrueVoice is a **serverless voice verification system** that uses:
 
 * **Whisper (OpenAI)** → verifies users spoke the correct challenge phrase.
 * **SpeechBrain ECAPA-TDNN** → extracts embeddings for speaker verification.
 * **FastAPI** → RESTful API endpoints.
-* **SQLite (local)** or **DynamoDB (AWS)** → store enrollments.
+* **SQLite (local)** or **S3 (AWS)** → store enrollments.
 
 It’s designed for **low-cost serverless scaling** via **AWS Lambda + API Gateway**.
 
