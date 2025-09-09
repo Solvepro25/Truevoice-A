@@ -1,201 +1,135 @@
-# 🎙️ TrueVoice – Voice Biometric Verification API
+# TrueVoice – Voice Verification API
 
-TrueVoice is a **voice authentication API** that combines:
+TrueVoice is a **serverless voice verification system** that uses:
 
-* **SpeechBrain ECAPA-TDNN** → for **speaker verification** (accent & voice identity).
-* **Whisper** → for **liveness detection** (ensuring user actually speaks the prompted phrase).
-* **Noise reduction** → powered by SpeechBrain **Spectral Mask Enhancement**.
+* **Whisper (OpenAI)** → verifies users spoke the correct challenge phrase.
+* **SpeechBrain ECAPA-TDNN** → extracts embeddings for speaker verification.
+* **FastAPI** → RESTful API endpoints.
+* **SQLite (local)** or **DynamoDB (AWS)** → store enrollments.
 
-This ensures secure, fast, and reliable **voice-based user authentication** for applications across **finance, health, education, and government services**.
+It’s designed for **low-cost serverless scaling** via **AWS Lambda + API Gateway**.
 
----
 
-## 🚀 Features
+## ✨ Features
 
-* 🔊 **Speaker Verification** – Identify & verify users based on their unique voiceprint.
-* 🗣️ **Liveness Check** – Ensure users speak a prompted phrase live (not a replay attack).
-* 🎧 **Noise Reduction** – Clean audio before processing for better accuracy.
-* 📜 **REST API Endpoints** – Exposed via FastAPI with Swagger/OpenAPI docs.
-* 🧪 **Unit Tests** – Pytest suite with pre-cached SpeechBrain models.
-* 📦 **Dockerized** – Ready for cloud deployment (Azure, AWS, GCP).
-* 📑 **Docs Included** – Postman collection (`postman_collection.json`) and Swagger (`collection.yaml`).
+* 🔐 **JWT Authentication** for secure endpoints.
+* 🗣 **Liveness Detection** (Whisper ensures phrase spoken matches challenge).
+* 🎙 **Speaker Verification** using SpeechBrain ECAPA-TDNN embeddings.
+* 📦 **Containerized with Docker** for portability.
+* ⚡ **Serverless Deployment** on AWS Lambda + API Gateway (HTTP API).
+* 🧪 **CI/CD with GitHub Actions** (pytest → build Docker → push ECR → update Lambda).
 
----
 
 ## 📂 Project Structure
 
 ```
-truevoice-api/
+.
 ├── app/
-│   └── main.py               # FastAPI app with endpoints
+│   └── main.py              # FastAPI app with endpoints
 ├── tests/
-│   └── test_app.py           # Unit tests for endpoints
-├── pretrained_models/        # Cached models (via CI)
-├── Dockerfile                # Container build file
-├── docker-compose.yml        # Local development runner
-├── requirements.txt          # Python dependencies
-├── postman_collection.json   # Postman API collection
-├── collection.yaml           # Swagger/OpenAPI spec
-├── .github/workflows/ci.yml  # GitHub Actions CI pipeline
-└── README.md                 # Documentation
+│   └── test_app.py          # Pytest unit tests
+├── Dockerfile               # Build container image for Lambda
+├── requirements.txt         # Dependencies
+├── .github/
+│   └── workflows/
+│       └── deploy.yml       # CI/CD pipeline
+└── README.md
 ```
 
 ---
 
-## ⚙️ Installation
+## 🛠 Setup (Local Development)
 
-### 1. Clone Repo
+### 1. Clone repo
 
 ```bash
-git clone https://github.com/your-username/truevoice-api.git
-cd truevoice-api
+git clone https://github.com/<your-username>/truevoice.git
+cd truevoice
 ```
 
-### 2. Create Virtual Env & Install Deps
+### 2. Install dependencies
 
 ```bash
-python -m venv venv
-source venv/bin/activate   # (Linux/Mac)
-venv\Scripts\activate      # (Windows)
-
-pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 3. Run API Locally
+### 3. Run locally
 
 ```bash
 uvicorn app.main:app --reload --port 8000
 ```
 
-Open docs at:
-
-* Swagger → [http://localhost:8000/docs](http://localhost:8000/docs)
-* ReDoc → [http://localhost:8000/redoc](http://localhost:8000/redoc)
+Open Swagger docs: 👉 `http://127.0.0.1:8000/docs`
 
 ---
 
 ## 🧪 Running Tests
 
 ```bash
-pytest -v --disable-warnings
+pytest -v
 ```
-
-✅ CI will **cache SpeechBrain models** to avoid repeated downloads.
 
 ---
 
-## 🐳 Running with Docker
+## 🚀 Deployment on AWS Lambda + API Gateway
 
-### Build & Run
+### 1. **Build Docker Image**
 
 ```bash
 docker build -t truevoice .
-docker run -p 8000:8000 truevoice
 ```
 
-### Using Docker Compose
+### 2. **Tag & Push to AWS ECR**
 
 ```bash
-docker-compose up --build
+aws ecr get-login-password --region <region> | docker login --username AWS --password-stdin <account_id>.dkr.ecr.<region>.amazonaws.com
+
+docker tag truevoice:latest <account_id>.dkr.ecr.<region>.amazonaws.com/truevoice-lambda:latest
+docker push <account_id>.dkr.ecr.<region>.amazonaws.com/truevoice-lambda:latest
 ```
 
----
-
-## 📡 API Endpoints
-
-### 🔹 Health Check
-
-```
-GET /health
-```
-
-Response:
-
-```json
-{ "status": "ok" }
-```
-
-### 🔹 Enroll User Voice
-
-```
-POST /enroll/{user_id}
-```
-
-Upload `.wav` file (16kHz mono).
-Stores voice embedding for future verification.
-
-### 🔹 Verify User Voice
-
-```
-POST /verify/{user_id}
-```
-
-Upload `.wav` file.
-Checks if voice matches enrolled profile.
-
-### 🔹 Liveness Check
-
-```
-POST /liveness
-```
-
-Input: audio file + expected phrase.
-Verifies phrase spoken matches prompt (anti-replay).
-
----
-
-## 📑 API Documentation
-
-* **Swagger/OpenAPI** → [`collection.yaml`](./collection.yaml)
-* **Postman Collection** → [`postman_collection.json`](./postman_collection.json)
-
-Import into Postman to test endpoints easily.
-
----
-
-## ☁️ Deployment
-
-### Deploy on **Azure App Service with Docker**
-
-1. Push repo to GitHub.
-2. Ensure Dockerfile is present.
-3. Run:
+### 3. **Deploy to Lambda**
 
 ```bash
-az login
-az webapp up --sku B1 --name truevoice-api --runtime "DOCKER|python:3.10"
+aws lambda update-function-code \
+  --function-name truevoice-lambda \
+  --image-uri <account_id>.dkr.ecr.<region>.amazonaws.com/truevoice-lambda:latest
 ```
 
-### Deploy on **AWS ECS / Fargate**
+### 4. **Expose with API Gateway (HTTP API)**
 
-1. Push Docker image to ECR.
-2. Create ECS service with Fargate task.
-3. Map port 8000 → Application Load Balancer.
+* Create an **HTTP API Gateway**.
+* Integrate it with your Lambda function.
+* Deploy and note your public URL.
 
----
 
-## 🔒 Security Notes
+## 🔄 CI/CD (GitHub Actions)
 
-* Use **HTTPS** in production.
-* Rotate enrolled voiceprints periodically.
-* Store embeddings securely (encrypted).
+Every push to `main`:
 
----
+1. Runs **pytest**.
+2. Builds Docker image.
+3. Pushes to **ECR**.
+4. Updates **Lambda** function automatically.
 
-## 📌 Roadmap
+Workflow: `.github/workflows/deploy.yml`
 
-* [ ] Multi-language accent training support
-* [ ] Voice activity detection (VAD) optimization
-* [ ] Integration with OAuth2 / JWT auth
-* [ ] Analytics dashboard for verification logs
 
----
+## 🔑 Environment Variables
 
-## 👨‍💻 Contributing
+Set in **AWS Lambda → Configuration → Environment Variables**:
 
-1. Fork repo
-2. Create feature branch (`git checkout -b feature/foo`)
-3. Commit changes (`git commit -m "Add foo"`)
-4. Push branch (`git push origin feature/foo`)
-5. Open PR 🚀
+* `JWT_SECRET` → secret key for JWT auth
+* `OPENAI_API_KEY` → OpenAI API key for Whisper
+
+
+## 📌 API Endpoints
+
+* `POST /token` → Get JWT token
+* `POST /enroll` → Enroll new speaker voice
+* `POST /verify` → Verify speaker against enrollment
+
+See:
+
+* `docs/postman_collection.json` (Postman collection)
+* `docs/openapi.yaml` (Swagger spec)
