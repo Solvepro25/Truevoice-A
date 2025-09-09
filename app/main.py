@@ -129,4 +129,4 @@ async def verify(user_id: str = Form(...), challenge_text: str = Form(...), audi
         shutil.rmtree(tmpdir)
 
 # --- Lambda Handler ---
-handler = Mangum(app)  # 👈 entrypoint for API Gateway
+handler = Mangum(app)
