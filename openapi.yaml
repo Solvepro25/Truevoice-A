@@ -1,17 +1,50 @@
-openapi: 3.0.1
+openapi: 3.0.0
 info:
-  title: TrueVoice API
-  version: "1.0.0"
+  title: My FastAPI Collection
+  version: 1.0.0
 servers:
-  - url: http://localhost:8000
+  - url: http://127.0.0.1:8000
 paths:
-  /health:
-    get:
-      summary: Health Check
-      description: Check if the API is alive
+  /api/enroll-voice:
+    post:
+      summary: Enroll a new voice sample
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: string
+                voice_sample:
+                  type: string
+                  format: binary
+              required:
+                - user_id
+                - voice_sample
       responses:
         "200":
-          description: API is alive
+          description: Voice enrolled successfully
+  /api/challenge:
+    get:
+      summary: Get a challenge phrase for verification
+      responses:
+        "200":
+          description: Challenge retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  challenge:
+                    type: string
+  /api/health:
+    get:
+      summary: Health check endpoint
+      responses:
+        "200":
+          description: API is healthy
           content:
             application/json:
               schema:
@@ -19,102 +52,65 @@ paths:
                 properties:
                   status:
                     type: string
-                    example: ok
-
-  /enroll/{user_id}:
+  /api/token:
     post:
-      summary: Enroll User Voice
-      description: Enroll a user's voiceprint with SpeechBrain ECAPA model
-      parameters:
-        - name: user_id
-          in: path
-          required: true
-          schema:
-            type: string
+      summary: Generate authentication token
       requestBody:
         required: true
         content:
-          multipart/form-data:
+          application/json:
             schema:
               type: object
               properties:
-                file:
+                username:
                   type: string
-                  format: binary
+                password:
+                  type: string
+              required:
+                - username
+                - password
       responses:
         "200":
-          description: Enrollment successful
+          description: Token generated
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  message:
+                  access_token:
                     type: string
-
-  /verify/{user_id}:
+                  token_type:
+                    type: string
+  /api/secure-verify-voice:
     post:
-      summary: Verify User Voice
-      description: Verify a user's voice against their enrollment embeddings
-      parameters:
-        - name: user_id
-          in: path
-          required: true
-          schema:
-            type: string
+      summary: Securely verify a voice sample
       requestBody:
         required: true
         content:
-          multipart/form-data:
+          application/json:
             schema:
               type: object
               properties:
-                file:
+                user_id:
+                  type: string
+                voice_sample:
                   type: string
                   format: binary
+                challenge_response:
+                  type: string
+              required:
+                - user_id
+                - voice_sample
       responses:
         "200":
-          description: Verification result
+          description: Voice verification result
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  user_id:
-                    type: string
-                  match_score:
-                    type: number
-                    format: float
                   verified:
                     type: boolean
-
-  /liveness:
-    post:
-      summary: Liveness Check
-      description: Check if the user actually spoke the expected phrase (via Whisper transcription)
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                file:
-                  type: string
-                  format: binary
-                expected_phrase:
-                  type: string
-      responses:
-        "200":
-          description: Liveness result
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  expected:
-                    type: string
-                  transcription:
-                    type: string
-                  liveness_passed:
-                    type: boolean
+                  confidence_score:
+                    type: number
+                    format: float
