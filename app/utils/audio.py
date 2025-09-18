@@ -18,7 +18,6 @@ speaker_model = EncoderClassifier.from_hparams(
     savedir="pretrained_models/ecapa",
     run_opts={"local_files_only": False},
 )
-
 print("✅ ECAPA model loaded")
 
 # OpenAI client
@@ -47,14 +46,18 @@ async def transcribe_audio(audio_path: str) -> str:
             )
         return transcript.text.strip()
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Whisper transcription failed: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Whisper transcription failed: {str(e)}"
+        )
 
 
 def compute_embedding(audio_path: str) -> np.ndarray:
-    """Convert if needed, denoise, resample, and compute ECAPA embedding."""
+    """
+    Convert if needed, denoise, resample, and compute ECAPA embedding.
+    """
     tmp_converted = None
     tmp_cleaned = None
-
     try:
         # Convert unsupported formats
         if audio_path.lower().endswith((".m4a", ".mp3")):
@@ -74,7 +77,10 @@ def compute_embedding(audio_path: str) -> np.ndarray:
 
         # Resample if needed
         if fs != 16000:
-            resampler = torchaudio.transforms.Resample(orig_freq=fs, new_freq=16000)
+            resampler = torchaudio.transforms.Resample(
+                orig_freq=fs,
+                new_freq=16000
+            )
             signal = resampler(signal)
 
         # Ensure correct shape

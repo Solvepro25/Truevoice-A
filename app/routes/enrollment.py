@@ -4,14 +4,21 @@ import os
 import tempfile
 import shutil
 import datetime
-from fastapi import APIRouter, UploadFile, Form, Depends, HTTPException, status
+from fastapi import (
+    APIRouter,
+    UploadFile,
+    Form,
+    Depends,
+    HTTPException,
+    status,
+)
 from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.models import Enrollment
 from app.utils.audio import compute_embedding, transcribe_audio
 from app.utils.verification import fuzzy_match
-from app.utils.storage import upload_audio   # ✅ updated import
+from app.utils.storage import upload_audio  # ✅ updated import
 from app.auth import verify_token
 
 router = APIRouter()
@@ -23,7 +30,7 @@ MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 async def enroll_voice(
     challenge_text: str = Form(...),
     audio: UploadFile = Form(...),
-    token_data: dict = Depends(verify_token),   # ✅ Extract user_id from token
+    token_data: dict = Depends(verify_token),  # ✅ Extract user_id from token
     db: Session = Depends(get_db),
 ):
     user_id = token_data.get("user_id")
@@ -36,7 +43,6 @@ async def enroll_voice(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No audio file provided",
         )
-
     if not audio.content_type.startswith("audio/"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -62,7 +68,6 @@ async def enroll_voice(
                     detail="Audio file is too large (max 10MB).",
                 )
             tmpfile.write(chunk)
-
         tmpfile.seek(0)
 
         # ✅ Store file on disk inside tempdir
@@ -98,7 +103,7 @@ async def enroll_voice(
                 Enrollment(
                     user_id=user_id,
                     embedding=embedding.tobytes(),
-                    audio_url=s3_uri,   # ✅ NEW field in model
+                    audio_url=s3_uri,  # ✅ NEW field in model
                     created_at=datetime.datetime.utcnow(),
                 )
             )
@@ -109,7 +114,7 @@ async def enroll_voice(
                 "user_id": user_id,
                 "transcript": transcript.strip(),
                 "similarity": ratio,
-                "audio_url": s3_uri,   # ✅ return S3 link
+                "audio_url": s3_uri,  # ✅ return S3 link
             }
 
         finally:

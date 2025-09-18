@@ -5,23 +5,30 @@ import shutil
 import tempfile
 import uuid
 import numpy as np
-from fastapi import APIRouter, UploadFile, Form, Depends, HTTPException, status
+from fastapi import (
+    APIRouter,
+    UploadFile,
+    Form,
+    Depends,
+    HTTPException,
+    status,
+)
 from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.models import Enrollment, VerificationLog
 from app.utils.audio import transcribe_audio, compute_embedding
 from app.utils.verification import cosine_similarity, fuzzy_match
-from app.utils.storage import upload_audio   # ✅ NEW
+from app.utils.storage import upload_audio  # ✅ NEW
 from app.auth import verify_token
 
 router = APIRouter()
 
 # Centralized threshold constant
-SIMILARITY_THRESHOLD = 0.75  
+SIMILARITY_THRESHOLD = 0.75
 
 # Max enrollments to compare against (for performance)
-MAX_ENROLLMENTS = 5  
+MAX_ENROLLMENTS = 5
 
 
 @router.post("/secure-verify-voice")
@@ -34,7 +41,7 @@ async def secure_verify(
     """
     Secure verification endpoint.
     Requires Bearer token in the Authorization header.
-    Extracts `user_id` from token instead of request body.
+    Extracts user_id from token instead of request body.
     """
     user_id = token_data.get("user_id")
     if not user_id:
@@ -42,7 +49,7 @@ async def secure_verify(
 
     tmpdir = tempfile.mkdtemp()
     try:
-        # Save upload to temp file
+        # --- Save upload to temp file ---
         audio_path = os.path.join(tmpdir, audio.filename)
         with open(audio_path, "wb") as f:
             shutil.copyfileobj(audio.file, f)
@@ -61,14 +68,14 @@ async def secure_verify(
             )
             db.add(log)
             db.commit()
+
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=f"Challenge mismatch (similarity {ratio:.2f})"
+                detail=f"Challenge mismatch (similarity {ratio:.2f})",
             )
 
         # --- Step 2: Speaker embedding + similarity ---
         new_embedding = compute_embedding(audio_path)
-
         enrollments = (
             db.query(Enrollment)
             .filter(Enrollment.user_id == user_id)
@@ -80,13 +87,13 @@ async def secure_verify(
         if not enrollments:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="No enrollment found"
+                detail="No enrollment found",
             )
 
         sims = [
             cosine_similarity(
                 new_embedding,
-                np.frombuffer(e.embedding, dtype=np.float32)
+                np.frombuffer(e.embedding, dtype=np.float32),
             )
             for e in enrollments
         ]
@@ -97,7 +104,7 @@ async def secure_verify(
         s3_uri = upload_audio(
             audio_path,
             f"verifications/{user_id}/{uuid.uuid4()}-{audio.filename}",
-            audio.filename
+            audio.filename,
         )
 
         # ✅ Save verification attempt
@@ -116,7 +123,7 @@ async def secure_verify(
             "similarity": best_sim,
             "transcript": transcript,
             "challenge_match": ratio,
-            "audio_url": s3_uri,   # ✅ return S3 link for verification attempt
+            "audio_url": s3_uri,  # ✅ return S3 link for verification attempt
         }
 
     finally:

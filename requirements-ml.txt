@@ -1,0 +1,12 @@
+torch
+torchaudio>=2.5.0
+torchcodec>=0.1.0
+speechbrain
+soundfile
+librosa
+noisereduce
+openai-whisper   # if you’re using whisper directly
+pydub
+soxr             # optional (used by librosa)
+sentencepiece    # required by speechbrain sometimes
+numpy
