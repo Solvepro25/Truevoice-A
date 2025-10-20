@@ -1,13 +1,20 @@
 openapi: 3.0.0
 info:
-  title: My FastAPI Collection
-  version: 1.0.0
+  title: Truevoice Biometrics API
+  version: "1.0.0"
+  description: |
+    TrueVoice is a biometric voice authentication API for secure user identity verification across Web, App, IVR, mobile banking, POS, ATM, USSD, and digital banking systems.
+
 servers:
-  - url: http://127.0.0.1:8000
+  - url: https://api.truevoice.com.ng/v1
+    description: Production server
+
 paths:
-  /api/enroll-voice:
+
+  /companies/signup:
     post:
-      summary: Enroll a new voice sample
+      summary: Company Signup
+      description: Register a company and receive API keys for authentication.
       requestBody:
         required: true
         content:
@@ -15,102 +22,153 @@ paths:
             schema:
               type: object
               properties:
+                name:
+                  type: string
+                  example: Example Bank
+      responses:
+        "200":
+          description: Successful signup
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: COMPANY_12345
+                  name:
+                    type: string
+                    example: Example Bank
+                  api_key:
+                    type: string
+                    example: TV-API-KEY-234234234234
+                  api_secret:
+                    type: string
+                    example: TV-API-SECRET-j2h3g2389gteg3sgs
+
+  /token:
+    post:
+      summary: Get Access Token
+      description: Generate an access token using company credentials.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                company_id:
+                  type: string
+                  example: COMPANY_12345
                 user_id:
                   type: string
-                voice_sample:
+                  example: USER_98765
+                lang:
+                  type: string
+                  example: en
+      responses:
+        "200":
+          description: Successful token generation
+
+  /token/refresh:
+    post:
+      summary: Refresh Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh_token:
+                  type: string
+      responses:
+        "200":
+          description: Token refreshed successfully
+
+  /token/revoke:
+    post:
+      summary: Revoke Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh_token:
+                  type: string
+      responses:
+        "200":
+          description: Token revoked successfully
+
+  /health:
+    get:
+      summary: Health Check
+      responses:
+        "200":
+          description: API is running
+
+  /languages:
+    get:
+      summary: Supported Languages
+      responses:
+        "200":
+          description: Returns supported language list
+
+  /challenge:
+    get:
+      summary: Get Voice Challenge
+      description: Fetch a phrase challenge for enrollment or verification.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Challenge returned successfully
+
+  /enroll-voice:
+    post:
+      summary: Enroll User Voiceprint
+      description: Upload a voice sample for biometric enrollment.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                audio:
                   type: string
                   format: binary
-              required:
-                - user_id
-                - voice_sample
       responses:
         "200":
           description: Voice enrolled successfully
-  /api/challenge:
-    get:
-      summary: Get a challenge phrase for verification
-      responses:
-        "200":
-          description: Challenge retrieved
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  challenge:
-                    type: string
-  /api/health:
-    get:
-      summary: Health check endpoint
-      responses:
-        "200":
-          description: API is healthy
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-  /api/token:
+
+  /secure-verify-voice:
     post:
-      summary: Generate authentication token
+      summary: Verify Voice for Secure Action
+      description: Upload a voice sample for transaction verification.
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               type: object
               properties:
-                username:
-                  type: string
-                password:
-                  type: string
-              required:
-                - username
-                - password
-      responses:
-        "200":
-          description: Token generated
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  access_token:
-                    type: string
-                  token_type:
-                    type: string
-  /api/secure-verify-voice:
-    post:
-      summary: Securely verify a voice sample
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                user_id:
-                  type: string
-                voice_sample:
+                audio:
                   type: string
                   format: binary
-                challenge_response:
-                  type: string
-              required:
-                - user_id
-                - voice_sample
       responses:
         "200":
           description: Voice verification result
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  verified:
-                    type: boolean
-                  confidence_score:
-                    type: number
-                    format: float
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
