@@ -1,70 +1,181 @@
 {
   "info": {
-    "name": "TrueVoice API",
-    "_postman_id": "f9d6f1ac-4b6f-11ee-be56-0242ac120002",
-    "description": "Postman collection for TrueVoice Voice Verification API",
+    "name": "TrueVoice API Collection",
+    "_postman_id": "e13a8b62-6a30-44b5-90bd-truevoice-col-001",
+    "description": "Postman Collection for TrueVoice Biometrics API",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "Health Check",
+      "name": "Auth - Company Signup",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/companies/signup",
+          "host": ["{{base_url}}"],
+          "path": ["companies", "signup"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Example Bank\"\n}"
+        }
+      },
+      "response": [
+        {
+          "name": "200 OK - Signup Response",
+          "status": "OK",
+          "code": 200,
+          "body": "{\n  \"id\": \"COMPANY_12345\",\n  \"name\": \"Example Bank\",\n  \"api_key\": \"TV-API-KEY-234234234234\",\n  \"api_secret\": \"TV-API-SECRET-j2h3g2389gteg3sgs\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "Auth - Get Access Token",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/token",
+          "host": ["{{base_url}}"],
+          "path": ["token"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"company_id\": \"COMPANY_12345\",\n  \"user_id\": \"USER_98765\",\n  \"lang\": \"en\"\n}"
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Auth - Refresh Token",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/token/refresh",
+          "host": ["{{base_url}}"],
+          "path": ["token", "refresh"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Auth - Revoke Token",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/token/revoke",
+          "host": ["{{base_url}}"],
+          "path": ["token", "revoke"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "System - Health Check",
       "request": {
         "method": "GET",
         "header": [],
-        "url": "{{baseUrl}}/health"
-      }
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": ["{{base_url}}"],
+          "path": ["health"]
+        }
+      },
+      "response": []
     },
     {
-      "name": "Enroll Voice",
+      "name": "System - Languages",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/languages",
+          "host": ["{{base_url}}"],
+          "path": ["languages"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Voice - Get Challenge",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{access_token}}" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/challenge",
+          "host": ["{{base_url}}"],
+          "path": ["challenge"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Voice - Enroll Voice",
       "request": {
         "method": "POST",
         "header": [
-          { "key": "accept", "value": "application/json" }
+          { "key": "Authorization", "value": "Bearer {{access_token}}" }
         ],
+        "url": {
+          "raw": "{{base_url}}/enroll-voice",
+          "host": ["{{base_url}}"],
+          "path": ["enroll-voice"]
+        },
         "body": {
           "mode": "formdata",
           "formdata": [
-            { "key": "file", "type": "file", "src": "sample_audio.wav" }
+            { "key": "audio", "type": "file", "src": "" }
           ]
-        },
-        "url": "{{baseUrl}}/enroll/12345"
-      }
+        }
+      },
+      "response": []
     },
     {
-      "name": "Verify Voice",
+      "name": "Voice - Secure Verify Voice",
       "request": {
         "method": "POST",
         "header": [
-          { "key": "accept", "value": "application/json" }
+          { "key": "Authorization", "value": "Bearer {{access_token}}" }
         ],
+        "url": {
+          "raw": "{{base_url}}/secure-verify-voice",
+          "host": ["{{base_url}}"],
+          "path": ["secure-verify-voice"]
+        },
         "body": {
           "mode": "formdata",
           "formdata": [
-            { "key": "file", "type": "file", "src": "test_audio.wav" }
+            { "key": "audio", "type": "file", "src": "" }
           ]
-        },
-        "url": "{{baseUrl}}/verify/12345"
-      }
-    },
-    {
-      "name": "Liveness Check",
-      "request": {
-        "method": "POST",
-        "header": [
-          { "key": "accept", "value": "application/json" }
-        ],
-        "body": {
-          "mode": "formdata",
-          "formdata": [
-            { "key": "file", "type": "file", "src": "liveness_test.wav" },
-            { "key": "expected_phrase", "value": "My voice is my password", "type": "text" }
-          ]
-        },
-        "url": "{{baseUrl}}/liveness"
-      }
+        }
+      },
+      "response": []
     }
   ],
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:8000" }
+    { "key": "base_url", "value": "https://api.truevoice.com/v1" },
+    { "key": "access_token", "value": "" },
+    { "key": "refresh_token", "value": "" }
   ]
 }
